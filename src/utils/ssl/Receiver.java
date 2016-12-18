@@ -1,10 +1,10 @@
-package ssl;
-import main.main;
-
+package utils.ssl;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+
+import utils.core.Application;
 
 
 
@@ -16,12 +16,14 @@ public class Receiver implements Runnable {
 	static int i;
 	Socket rs,s;
 	Sender S;
-	public Receiver(Socket rs,Socket s,BufferedInputStream rbfr,BufferedOutputStream prw,Sender S){
+	Application application;
+	public Receiver(Socket rs,Socket s,BufferedInputStream rbfr,BufferedOutputStream prw,Sender S, Application application){
 		this.rbfr=rbfr;
 		this.prw=prw;
 		this.rs=rs;
 		this.s=s;
 		this.S=S;
+		this.application = application;
 	}
 	@SuppressWarnings("unused")
 	@Override
@@ -41,9 +43,9 @@ public class Receiver implements Runnable {
 					{
 						System.out.println(++i+" fois");
 						System.out.println("[Bytes received "+" : " + bytesIn+"] from "+S.getHost()+" By Thread "+S.numThread);
-						main.fin = false;
+						application.setFinished(false);
 						System.out.println("Le grand gagnant est " + S.numThread);
-						main.gagnant = S.numThread;
+						application.setWinnerThread(S.numThread);
 						if(first==0){
 							
 							first=1;
@@ -52,14 +54,14 @@ public class Receiver implements Runnable {
 								break;*/
 							}
 							else 
-								if (main.SEMABIN==1){
-									main.SEMABIN=0;
-									main.blackListed=S.numThread;
-									main.SEMA=S.numThread;
+								if (application.getSEMABIN()==1){
+									application.setSEMABIN(0);
+									application.setBlackListedThread(S.numThread);
+									application.setSEMA(S.numThread);
 								}
 						}
 						
-						if(main.SEMA==S.numThread){
+						if(application.getSEMA()==S.numThread){
 							prw.write(buf, 0, bytesIn);
 							prw.flush();
 							byteCount += bytesIn;

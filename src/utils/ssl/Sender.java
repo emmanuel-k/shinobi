@@ -1,10 +1,14 @@
-package ssl;
+package utils.ssl;
 
 
-import java.net.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
-import main.main;
+import utils.core.Application;
 
 
 
@@ -19,13 +23,17 @@ public class Sender implements Runnable{
 	Socket rs=null;
 	private String host;
 	private int port;
+	private Application application;
+	
 	@SuppressWarnings("static-access")
-	public Sender(Socket s,String host,int port,int numThread){
+	public Sender(Socket s,String host,int port,int numThread, Application application) {
 		this.s=s;
 		this.setHost(host);
 		this.port=port;
 		this.numThread=numThread;
+		this.application = application;
 	}
+	
 	@Override
 	public void run() {
 		
@@ -35,7 +43,7 @@ public class Sender implements Runnable{
 		try{
 			
 			
-			if(main.gagnant != -10 && numThread != main.gagnant)
+			if(application.getWinnerThread() != -10 && numThread != application.getWinnerThread())
 			{
 				
 				return;
@@ -78,7 +86,7 @@ public class Sender implements Runnable{
 				closeSock.start();
 
 				
-				if(main.gagnant != -10 && numThread != main.gagnant)
+				if(application.getWinnerThread() != -10 && numThread != application.getWinnerThread())
 				{
 					
 					return;
@@ -93,7 +101,7 @@ public class Sender implements Runnable{
 			//rprw.flush();
 			System.out.println("Connected to "+getHost()+':'+port + " !" + " le pede est "+ numThread);
 			//int i=0;
-			Receiver rfs= new Receiver(rs,s,bfi,bfo,this);
+			Receiver rfs= new Receiver(rs,s,bfi,bfo,this,application);
 			Thread trfs= new Thread(rfs);
 			
 			trfs.start();
@@ -107,7 +115,7 @@ public class Sender implements Runnable{
 					int bytesIn = 0,byteCount=0;
 					while ((bytesIn = bf.read(buf)) >= 0) 
 					{	
-						if(((main.SEMA==-1)&&(main.blackListed==-1))||((main.SEMA==numThread)&&(main.blackListed>-1))){
+						if( ( (application.getSEMA()==-1)&&(application.getBlackListedThread()==-1) )  ||  ( (application.getSEMA()==numThread)&&(application.getBlackListedThread()>-1) ) ){
 							  System.out.println("[Bytes sended "+" : " + bytesIn+"]"+" By Thread "+numThread);
 							  	
 							  
@@ -130,17 +138,17 @@ public class Sender implements Runnable{
 						
 						//Thread.sleep(100);
 				}catch(Exception e){System.out.println("class proxy: "+e);
-					if(e.toString().contains("Connection reset")) main.blackListed=21;
+					if(e.toString().contains("Connection reset")) application.setBlackListedThread(21);
 				}
 			
 			
 			//}
 				
-				main.EstConnect = true;
+				application.setFinished(true);
 			
 		}catch(Exception e){
 
-			main.EstConnect = false;
+			application.setFinished(false);
 		}
 	}
 	
